@@ -1,6 +1,6 @@
-# OpenSSL bindings for Go
+# TASSL bindings for Go
 
-Please see http://godoc.org/github.com/spacemonkeygo/openssl for more info
+Please see https://pkg.go.dev/github.com/notutensil/gotassl for more info
 
 ### License
 
