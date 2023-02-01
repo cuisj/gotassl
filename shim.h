@@ -53,11 +53,12 @@ extern const char * X_SSL_get_cipher_name(const SSL *ssl);
 extern int X_SSL_session_reused(SSL *ssl);
 extern int X_SSL_new_index();
 
-extern const SSL_METHOD *X_SSLv23_method();
+extern const SSL_METHOD *X_TLS_method();
 extern const SSL_METHOD *X_SSLv3_method();
 extern const SSL_METHOD *X_TLSv1_method();
 extern const SSL_METHOD *X_TLSv1_1_method();
 extern const SSL_METHOD *X_TLSv1_2_method();
+extern const SSL_METHOD *X_CNTLS_client_method();
 
 #if defined SSL_CTRL_SET_TLSEXT_HOSTNAME
 extern int sni_cb(SSL *ssl_conn, int *ad, void *arg);
@@ -119,6 +120,7 @@ extern const EVP_MD *X_EVP_sha224();
 extern const EVP_MD *X_EVP_sha256();
 extern const EVP_MD *X_EVP_sha384();
 extern const EVP_MD *X_EVP_sha512();
+extern const EVP_MD *X_EVP_sm3();
 extern int X_EVP_MD_size(const EVP_MD *md);
 extern int X_EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
 extern int X_EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
@@ -167,6 +169,7 @@ extern int X_sk_X509_num(STACK_OF(X509) *sk);
 extern X509 *X_sk_X509_value(STACK_OF(X509)* sk, int i);
 extern long X_X509_get_version(const X509 *x);
 extern int X_X509_set_version(X509 *x, long version);
+extern int X_X509_get_signature_nid(const X509 *x);
 
 /* PEM methods */
 extern int X_PEM_write_bio_PrivateKey_traditional(BIO *bio, EVP_PKEY *key, const EVP_CIPHER *enc, unsigned char *kstr, int klen, pem_password_cb *cb, void *u);

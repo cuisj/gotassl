@@ -42,6 +42,7 @@ const (
 	EVP_SHA256    EVP_MD = iota
 	EVP_SHA384    EVP_MD = iota
 	EVP_SHA512    EVP_MD = iota
+	EVP_SM3       EVP_MD = iota
 )
 
 // X509_Version represents a version on an x509 certificate.
@@ -66,7 +67,10 @@ type CertificateInfo struct {
 	Issued       time.Duration
 	Expires      time.Duration
 	Country      string
+	ProvinceName string
+	LocalityName string
 	Organization string
+	OrgUnitName  string
 	CommonName   string
 }
 
@@ -124,6 +128,13 @@ func (n *Name) GetEntry(nid NID) (entry string, ok bool) {
 	return C.GoStringN(buf, entrylen), true
 }
 
+// Compare compares two Name, return an integer less than, equal to,
+// or greater than zero if object a is found to be less than, to match,
+// or be greater than b, respectively.
+func (n *Name) Compare(m *Name) int {
+	return int(C.X509_NAME_cmp(n.name, m.name))
+}
+
 // NewCertificate generates a basic certificate based
 // on the provided CertificateInfo struct
 func NewCertificate(info *CertificateInfo, key PublicKey) (*Certificate, error) {
@@ -138,7 +149,10 @@ func NewCertificate(info *CertificateInfo, key PublicKey) (*Certificate, error) 
 	}
 	err = name.AddTextEntries(map[string]string{
 		"C":  info.Country,
+		"ST": info.ProvinceName,
+		"L":  info.LocalityName,
 		"O":  info.Organization,
+		"OU": info.OrgUnitName,
 		"CN": info.CommonName,
 	})
 	if err != nil {
@@ -218,7 +232,7 @@ func (c *Certificate) SetSerial(serial *big.Int) error {
 	defer C.BN_free(bn)
 
 	serialBytes := serial.Bytes()
-	if bn = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&serialBytes[0])), C.int(len(serialBytes)), bn); bn == nil {
+	if bn = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&serialBytes)), C.int(len(serialBytes)), bn); bn == nil {
 		return errors.New("failed to set serial")
 	}
 	if sno = C.BN_to_ASN1_INTEGER(bn, sno); sno == nil {
@@ -266,9 +280,10 @@ func (c *Certificate) Sign(privKey PrivateKey, digest EVP_MD) error {
 	case EVP_SHA256:
 	case EVP_SHA384:
 	case EVP_SHA512:
+	case EVP_SM3:
 	default:
 		return errors.New("Unsupported digest" +
-			"You're probably looking for 'EVP_SHA256' or 'EVP_SHA512'.")
+			"You're probably looking for 'EVP_SHA256', 'EVP_SHA512' or 'EVP_SM3'.")
 	}
 	return c.insecureSign(privKey, digest)
 }
@@ -307,6 +322,8 @@ func getDigestFunction(digest EVP_MD) (md *C.EVP_MD) {
 		md = C.X_EVP_sha384()
 	case EVP_SHA512:
 		md = C.X_EVP_sha512()
+	case EVP_SM3:
+		md = C.X_EVP_sm3()
 	}
 	return md
 }
@@ -405,6 +422,10 @@ func (c *Certificate) GetVersion() X509_Version {
 	return X509_Version(C.X_X509_get_version(c.x))
 }
 
+func (c *Certificate) GetSignatureNid() NID {
+	return NID(C.X_X509_get_signature_nid(c.x))
+}
+
 // SetVersion sets the X509 version of the certificate.
 func (c *Certificate) SetVersion(version X509_Version) error {
 	cvers := C.long(version)
@@ -412,4 +433,17 @@ func (c *Certificate) SetVersion(version X509_Version) error {
 		return errors.New("failed to set certificate version")
 	}
 	return nil
+}
+
+// CheckCA checks if given certificate is CA certificate (can be used to sign other certificates).
+// return 0, if it is not CA certificate,
+// 1 if it is proper X509v3 CA certificate with basicConstraints extension CA:TRUE,
+// 2 Only possible in older versions of openSSL when basicConstraints are absent new versions will not return this value. May be a CA
+// 3 if it is self-signed X509 v1 certificate,
+// 4 if it is certificate with keyUsage extension with bit keyCertSign set, but without basicConstraints, and
+// 5 if it has outdated Netscape Certificate Type extension telling that it is CA certificate.
+//
+// Actually, any nonzero value means that this certificate could have been used to sign other certificates.
+func (c *Certificate) CheckCA() int {
+	return int(C.X509_check_ca(c.x))
 }

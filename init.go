@@ -57,10 +57,22 @@ pre-Heartbleed, it sure is receiving it now.
 
 # Usage
 
+Import this package:
+
+	import (
+		openssl "github.com/notutensil/gotassl"
+	)
+
+Use SM as Client:
+
+	ctx, err = openssl.NewCtxWithVersion(openssl.CNTLS_CLT)
+	if err != nil {
+		return
+	}
+
 Starting an HTTP server that uses OpenSSL is very easy. It's as simple as:
 
-	log.Fatal(openssl.ListenAndServeTLS(
-	      ":8443", "my_server.crt", "my_server.key", myHandler))
+	log.Fatal(openssl.ListenAndServeTLS(":8443", "my_server.crt", "my_server.key", myHandler))
 
 Getting a net.Listener that uses OpenSSL is also easy:
 

@@ -502,3 +502,38 @@ func GenerateED25519Key() (PrivateKey, error) {
 	})
 	return p, nil
 }
+
+// GenerateSM2Key generates a SM2 key
+func GenerateSM2Key() (PrivateKey, error) {
+	// Key context
+	keyCtx := C.EVP_PKEY_CTX_new_id(C.EVP_PKEY_SM2, nil)
+	if keyCtx == nil {
+		return nil, errors.New("failed creating SM2 parameter generation context")
+	}
+	defer C.EVP_PKEY_CTX_free(keyCtx)
+
+	// Generate the key
+	var privKey *C.EVP_PKEY
+	if int(C.EVP_PKEY_keygen_init(keyCtx)) != 1 {
+		return nil, errors.New("failed initializing SM2 key generation context")
+	}
+
+	if int(C.EVP_PKEY_CTX_ctrl(keyCtx, -1, C.EVP_PKEY_OP_PARAMGEN|C.EVP_PKEY_OP_KEYGEN, C.EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID, C.EVP_PKEY_SM2, nil)) != 1 {
+		return nil, errors.New("failed initializing SM2 key generation context ctrl")
+	}
+
+	if int(C.EVP_PKEY_CTX_ctrl(keyCtx, -1, C.EVP_PKEY_OP_PARAMGEN|C.EVP_PKEY_OP_KEYGEN, C.EVP_PKEY_CTRL_EC_PARAM_ENC, C.OPENSSL_EC_NAMED_CURVE, nil)) != 1 {
+		return nil, errors.New("failed initializing SM2 key generation context ctrl")
+	}
+
+	if int(C.EVP_PKEY_keygen(keyCtx, &privKey)) != 1 {
+		return nil, errors.New("failed generating SM2 private key")
+	}
+
+	p := &pKey{key: privKey}
+	runtime.SetFinalizer(p, func(p *pKey) {
+		C.X_EVP_PKEY_free(p.key)
+	})
+
+	return p, nil
+}

@@ -443,6 +443,10 @@ const SSL_METHOD *X_SSLv23_method() {
 	return SSLv23_method();
 }
 
+const SSL_METHOD *X_TLS_method() {
+	return TLS_method();
+}
+
 const SSL_METHOD *X_SSLv3_method() {
 #ifndef OPENSSL_NO_SSL3_METHOD
 	return SSLv3_method();
@@ -466,6 +470,14 @@ const SSL_METHOD *X_TLSv1_1_method() {
 const SSL_METHOD *X_TLSv1_2_method() {
 #if defined(TLS1_2_VERSION) && !defined(OPENSSL_SYSNAME_MACOSX)
 	return TLSv1_2_method();
+#else
+	return NULL;
+#endif
+}
+
+const SSL_METHOD *X_CNTLS_client_method() {
+#ifndef OPENSSL_NO_CNSM
+	return CNTLS_client_method();
 #else
 	return NULL;
 #endif
@@ -630,6 +642,10 @@ const EVP_MD *X_EVP_sha512() {
 	return EVP_sha512();
 }
 
+const EVP_MD *X_EVP_sm3() {
+	return EVP_sm3();
+}
+
 int X_EVP_MD_size(const EVP_MD *md) {
 	return EVP_MD_size(md);
 }
@@ -767,4 +783,8 @@ long X_X509_get_version(const X509 *x) {
 
 int X_X509_set_version(X509 *x, long version) {
 	return X509_set_version(x, version);
+}
+
+int X_X509_get_signature_nid(const X509 *x) {
+	return X509_get_signature_nid(x);
 }
