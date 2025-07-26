@@ -27,7 +27,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/notutensil/gotassl/utils"
+	"github.com/cuisj/gotassl/utils"
 )
 
 var (

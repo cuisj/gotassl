@@ -1,3 +1,3 @@
-module github.com/notutensil/gotassl
+module github.com/cuisj/gotassl
 
 go 1.18

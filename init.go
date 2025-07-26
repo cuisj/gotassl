@@ -60,7 +60,7 @@ pre-Heartbleed, it sure is receiving it now.
 Import this package:
 
 	import (
-		"github.com/notutensil/gotassl"
+		"github.com/cuisj/gotassl"
 	)
 
 Use SM as Client:
